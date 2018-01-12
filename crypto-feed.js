@@ -27,6 +27,10 @@ const updateCryptoPrices = async () => {
         const percentChange1hr = Number(coinData.percent_change_1h);
         const percentChange24hr = Number(coinData.percent_change_24h);
         const percentChange7d = Number(coinData.percent_change_7d);
+        const marketCap = Number(coinData.market_cap_usd);
+        const circulatingSupply = Number(coinData.available_supply);
+        const totalSupply = Number(coinData.total_supply);
+        const maxSupply = Number(coinData.max_supply);
         // console.log('response',response.data);
         axios.patch(`${airtableApiEndpoint}/Coins/${coin.id}?api_key=${airtableApiKey}`, {
             "fields": {
@@ -35,6 +39,10 @@ const updateCryptoPrices = async () => {
                 "7 Day Change": percentChange7d,
                 "24hr Change": percentChange24hr,
                 "1hr Change": percentChange1hr,
+                "Market Cap": marketCap,
+                "Circulating Supply": circulatingSupply,
+                "Total Supply": totalSupply,
+                "Max Supply": maxSupply,
                 "Last Updated On": now
             }
         });
