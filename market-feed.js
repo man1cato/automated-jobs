@@ -12,7 +12,7 @@ const now = new Date().toUTCString();
 
 
 const updateCryptoPrices = async () => {
-    const airtableResponse = await axios.get(`${airtableApiEndpoint}/Assets?api_key=${airtableApiKey}`);
+    const airtableResponse = await axios.get(`${airtableApiEndpoint}/Assets?view=API%20Feed&api_key=${airtableApiKey}`);
     const assets = airtableResponse.data.records.map((record) => ({
         id: record.id,
         name: record.fields.Name.toLowerCase(),
