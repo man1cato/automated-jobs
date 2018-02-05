@@ -6,6 +6,7 @@
   "repository": "",
   "author": "Mostafa Eweda <mo.eweda@gmail.com>",
   "dependencies": {
+    "airtable": "^0.5.2",
     "async": "~0.2.8",
     "axios": "^0.17.1",
     "binance-node-api": "^0.2.0",

@@ -18,9 +18,13 @@ const postCryptoVolume = async () => {
     // console.log('response',assetData);
     
     const airtableResponse = await axios.get(`${airtableApiEndpoint}/Volume?maxRecords=1&sort[0][field]=Date&sort[0][direction]=desc&api_key=${airtableApiKey}`);
-    const previousVolume = airtableResponse.data.records[0].fields['24hr Volume'];
-    const volumeChange = newVolume-previousVolume;
-    const percentChange = volumeChange/previousVolume*100;
+    const lastRecord = airtableResponse.data.records[0];
+    const lastVolume = lastRecord.fields['24hr Volume'];
+    const lastDate = lastRecord.fields.Date;
+    
+    const volumeChange = newVolume-lastVolume;
+    const percentChange = volumeChange/lastVolume*100;
+    
     console.log({"24hr Volume": newVolume,
             "$ Change": volumeChange,
             "% Change": percentChange,

@@ -2,10 +2,12 @@ require('dotenv').config();
 const _ = require('lodash');
 const axios = require('axios');
 
-const airtableApiEndpoint = 'https://api.airtable.com/v0/appWyAv00LNP2Jv9G';
+//Airtable API
+const airtableApiEndpoint = 'https://api.airtable.com/v0/app9hQCFu4mbhVICF';
 const airtableApiKey = process.env.MY_AIRTABLE_APIKEY;
 const coinMarketApiEndpoint = 'https://api.coinmarketcap.com/v1';
 
+//Binance API
 const Binance = require('binance-node-api');
 const binanceConfig = {
   apiKey: process.env.MY_BINANCE_APIKEY,
@@ -14,9 +16,80 @@ const binanceConfig = {
 const binanceApi = Object.create(Binance);
 binanceApi.init(binanceConfig);
 
+//GDAX API
+const gdax = require('gdax');
+const gdaxApiKey = process.env.MY_GDAX_APIKEY;
+const gdaxSecret = process.env.MY_GDAX_SECRET;
+const gdaxPassphrase = process.env.MY_GDAX_PASSPHRASE;
+const gdaxApiEndpoint = 'https://api.gdax.com';
+const gdaxSandboxEndpoint = 'https://api-public.sandbox.gdax.com';
+const authedClient = new gdax.AuthenticatedClient(
+  gdaxApiKey,
+  gdaxSecret,
+  gdaxPassphrase,
+  gdaxApiEndpoint
+);
+
+const updateTransfers = async () => {
+    const transfersResponse = await axios.get(`${airtableApiEndpoint}/Transfers?api_key=${airtableApiKey}`);    //GET LIST OF EXISTING TRANSFERS
+    const balancesResponse = await axios.get(`${airtableApiEndpoint}/Balances?api_key=${airtableApiKey}`);      //GET LIST OF BALANCE RECORDS
+    const transferIds = transfersResponse.data.records.map((record) => record.fields['Transfer ID']);
+    const ownerAssets = balancesResponse.data.records.map((record) => ({
+        id: record.id,                  //ID IS NEEDED FOR THE POST METHOD LATER
+        name: record.fields.Name,
+        symbol: record.fields.Symbol
+    }));
+    
+    authedClient.getAccounts((err, res, data) => {      //GET ACCOUNT DATA FROM GDAX
+        if (err) {
+            console.log(err);
+        } else {
+            for (let account of data) {                   
+                const accountId = account.id;
+                const symbol = account.currency;
+                const balance = account.balance;
+                const ownerAsset = ownerAssets.find((item) => item.name === `Andy ${symbol}`);  //GRAB THE LINKED RECORD ID FOR THAT OWNER/ASSET
+                console.log('');
+                authedClient.getAccountHistory(accountId, (err, res, data) => {         //GET ALL THE ACCOUNT DATA FROM GDAX
+                    if (err) {
+                        console.log(err);
+                    } else {
+                        const transfers = data.filter((item) => item.type === 'transfer');      //FILTER OUT THE NON-TRANSFER DATA
+                        for (let transfer of transfers) {
+                            const transferId = transfer.details.transfer_id;
+                            if (!transferIds.find((id) => id === transferId)) {             //POST THE TRANSFER RECORDS FOR THOSE THAT DON'T ALREADY EXIST
+                                axios.post(`${airtableApiEndpoint}/Transfers?api_key=${airtableApiKey}`, {
+                                    "fields": {
+                                        "Amount": transfer.amount,
+                                        "Type": transfer.details.transfer_type === 'deposit' ? 'Deposit' : 'Withdrawal',
+                                        "Owner/Asset": [ownerAsset.id],
+                                        "Transfer Date": transfer.created_at,
+                                        "Transfer ID": transferId
+                                    }
+                                });
+                                // .then(() => {
+                                    console.log({
+                                        "Amount": transfer.amount,
+                                        "Type": transfer.details.transfer_type === 'deposit' ? 'Deposit' : 'Withdrawal',
+                                        "Owner/Asset": [ownerAsset.id],
+                                        "Transfer Date": transfer.created_at,
+                                        "Transfer ID": transferId
+                                    });
+                                // }).catch((e) => {
+                                //     console.log(e);
+                                // });
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    });
+};
+
+
 
 const updateTrades = async () => {
-    
     const airtableResponse = await axios.get(`${airtableApiEndpoint}/Balances?view=Andy&api_key=${airtableApiKey}`);
     const assets = airtableResponse.data.records.map((record) => ({
         id: record.id,
@@ -34,7 +107,7 @@ const updateTrades = async () => {
             
             try {
                 const tradesResponse = await binanceApi.getAccountTradeList({symbol, timestamp: Date.now()});
-            
+                
                 if (tradesResponse) {
                     const trades = tradesResponse.data;
                     console.log(symbol);
@@ -93,4 +166,6 @@ const updateTrades = async () => {
     }
 };
 
-updateTrades();
+
+updateTransfers();
+// updateTrades();
