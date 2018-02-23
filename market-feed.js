@@ -1,7 +1,7 @@
 require('dotenv').config();
 const axios = require('axios');
 
-const airtableApiEndpoint = 'https://api.airtable.com/v0/appWyAv00LNP2Jv9G';
+const airtableApiEndpoint = 'https://api.airtable.com/v0/appA5nGrBVb4RN9No';
 const airtableApiKey = process.env.MY_AIRTABLE_APIKEY;
 const coinMarketApiEndpoint = 'https://api.coinmarketcap.com/v1';
 const groupmeBaseUrl = 'https://api.groupme.com/v3';
@@ -17,7 +17,8 @@ const updateCryptoPrices = async () => {
     const assets = assetsResponse.data.records.map((record) => ({
         id: record.id,
         name: record.fields.Name,
-        symbol: record.fields.Symbol
+        symbol: record.fields.Symbol, 
+        ath: record.fields['All-Time High']
     }));
     // console.log('Assets:',assets);
     
@@ -29,11 +30,14 @@ const updateCryptoPrices = async () => {
             const percentChange1hr = Number(assetData.percent_change_1h);
             const percentChange24hr = Number(assetData.percent_change_24h);
             const valueUSD = Number(assetData.price_usd);
+            const ath = valueUSD > asset.ath ? valueUSD : asset.ath;
+            console.log('ath:',ath);
             console.log('response',marketResponse.data);
+            
             axios.patch(`${airtableApiEndpoint}/Assets/${asset.id}?api_key=${airtableApiKey}`, {
                 "fields": {
-                    "Value (BTC)": Number(assetData.price_btc),
                     "Value (USD)": valueUSD,
+                    "All-Time High": ath,
                     "7 Day Change": Number(assetData.percent_change_7d),
                     "24hr Change": percentChange24hr,
                     "1hr Change": percentChange1hr,

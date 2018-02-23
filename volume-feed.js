@@ -1,7 +1,7 @@
 require('dotenv').config();
 const axios = require('axios');
 
-const airtableApiEndpoint = 'https://api.airtable.com/v0/appWyAv00LNP2Jv9G';
+const airtableApiEndpoint = 'https://api.airtable.com/v0/appA5nGrBVb4RN9No';
 const airtableApiKey = process.env.MY_AIRTABLE_APIKEY;
 const coinMarketApiEndpoint = 'https://api.coinmarketcap.com/v1';
 const groupmeBaseUrl = 'https://api.groupme.com/v3';
